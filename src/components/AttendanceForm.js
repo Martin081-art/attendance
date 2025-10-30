@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import { createAttendance } from '../utils/api'; // make sure path is correct
 
 const AttendanceForm = () => {
   const [formData, setFormData] = useState({
@@ -24,7 +23,7 @@ const AttendanceForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Basic validation
     if (!formData.employeeName.trim() || !formData.employeeID.trim()) {
       setMessage('Please fill in all required fields');
@@ -34,10 +33,10 @@ const AttendanceForm = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/attendance', formData);
-      setMessage(response.data.message);
+      const response = await createAttendance(formData);
+      setMessage(response.message || 'Attendance submitted successfully');
       setIsError(false);
-      
+
       // Reset form
       setFormData({
         employeeName: '',
@@ -46,7 +45,7 @@ const AttendanceForm = () => {
         status: 'Present'
       });
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Failed to submit attendance. Please try again.');
+      setMessage(error.message || 'Failed to submit attendance. Please try again.');
       setIsError(true);
     } finally {
       setIsSubmitting(false);

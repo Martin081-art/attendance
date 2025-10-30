@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import {
+  getAttendance,
+  filterAttendanceByDate,
+  searchAttendance,
+  deleteAttendance
+} from '../utils/api'; // adjust path if necessary
 
 const AttendanceDashboard = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -15,8 +20,8 @@ const AttendanceDashboard = () => {
   const fetchAttendanceRecords = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/attendance');
-      setAttendanceRecords(response.data);
+      const data = await getAttendance();
+      setAttendanceRecords(data);
       setError('');
     } catch (error) {
       setError('Failed to fetch attendance records. Make sure the backend server is running.');
@@ -34,9 +39,8 @@ const AttendanceDashboard = () => {
 
     try {
       setLoading(true);
-      // FIXED: Use URL parameter instead of query parameter
-      const response = await axios.get(`http://localhost:5000/api/attendance/filter/${filterDate}`);
-      setAttendanceRecords(response.data);
+      const data = await filterAttendanceByDate(filterDate);
+      setAttendanceRecords(data);
       setError('');
     } catch (error) {
       setError('Failed to filter records. Make sure the date format is correct (YYYY-MM-DD).');
@@ -54,16 +58,14 @@ const AttendanceDashboard = () => {
 
     try {
       setLoading(true);
-      // FIXED: Use URL parameter instead of query parameter
-      const response = await axios.get(`http://localhost:5000/api/attendance/search/${searchTerm}`);
-      setAttendanceRecords(response.data);
+      const data = await searchAttendance(searchTerm);
+      setAttendanceRecords(data);
       setError('');
     } catch (error) {
-      // If search endpoint doesn't exist, fall back to client-side filtering
       console.log('Search endpoint not available, falling back to client-side filtering');
       try {
-        const allResponse = await axios.get('http://localhost:5000/api/attendance');
-        const filtered = allResponse.data.filter(record =>
+        const allData = await getAttendance();
+        const filtered = allData.filter(record =>
           record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           record.employeeID.toLowerCase().includes(searchTerm.toLowerCase())
         );
@@ -81,7 +83,7 @@ const AttendanceDashboard = () => {
   const handleDeleteRecord = async (id) => {
     if (window.confirm('Are you sure you want to delete this attendance record?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/attendance/${id}`);
+        await deleteAttendance(id);
         setAttendanceRecords(attendanceRecords.filter(record => record.id !== id));
       } catch (error) {
         setError('Failed to delete record');
@@ -96,7 +98,6 @@ const AttendanceDashboard = () => {
     fetchAttendanceRecords();
   };
 
-  // For real-time search (optional - remove if you prefer button search)
   useEffect(() => {
     if (searchTerm.trim()) {
       const timeoutId = setTimeout(() => {
@@ -141,7 +142,6 @@ const AttendanceDashboard = () => {
         </div>
       )}
 
-      {/* Bonus Features: Filter and Search */}
       <div className="row mb-4">
         <div className="col-md-6">
           <div className="input-group">
